@@ -7,7 +7,10 @@ Created on Mon Jan  2 16:01:04 2023
 import numpy as np
 import pandas as pd
 
-def get_shares_and_indexes(data, share_row=None, index_column=None):
+def get_shares_and_indexes(
+        data, 
+        share_row=None, 
+        index_column=None):
     """
     Gives dataframes of % against a row and ratio of % against a column
     
