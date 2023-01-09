@@ -20,39 +20,91 @@ def turf(
         top=None
         ):
     """
+    Calculates the total unduplicated reach and frequency of a column-combination.
     
+    It is useful for getting the unduplicated reach and frequency of of combinations of length=size
+    from survey questions dealing with user preferences. 
+    TURF is used for optimizing portfolios where n=number of columns/products (each column containing
+    the preference of a user liking that product or not, i.e. 1 and 0) and size=length of combinations
+    to test the reach and frequency for, i.e. nCr.
 
     Parameters
     ----------
-    data : TYPE
-        DESCRIPTION.
-    columns : TYPE
-        DESCRIPTION.
-    size : TYPE
-        DESCRIPTION.
-    weights : TYPE, optional
-        DESCRIPTION. The default is None.
-    min_response : TYPE, optional
-        DESCRIPTION. The default is None.
-    forced_alt : TYPE, optional
-        DESCRIPTION. The default is None.
-    mxclusive_alt : TYPE, optional
-        DESCRIPTION. The default is None.
-    top : TYPE, optional
-        DESCRIPTION. The default is None.
-
-    Raises
-    ------
-    ValueError
-        DESCRIPTION.
-    Exception
-        DESCRIPTION.
+    data : DataFrame
+        Dataframe of survey data, where rows are respondents and columns are questions.
+    columns : list(column name or index)
+        Column names of the question to profile. Columns should have 1s and 0s.
+    size : int
+        Length of the combinations to test for TURF.
+    weights : 1-D array-like or column name/index; optional
+        Column name of the weights column or weights given separately in an array.
+        If none is given then each row has weight=1.
+    min_response : int or float, optional
+        Minimum weighted positive response rate of a column out of "columns" required for the column
+        to be considered for TURF. The default is None.
+    forced_alt : list(column name or index), optional
+        Set of columns out of "columns" which are to be forced-added in every combination.
+        It enables checking for reach of extending an exisiting portfolio with new products.
+        The default is None.
+    mxclusive_alt : list(column name or index), optional
+        Set of columns out of "columns" which should be considered mutually exclusive.
+        This will exclude the combinations which contains more than 1 column out of the given list.
+        The default is None.
+    top : int, optional
+        The number of top n combinations based on reach that should be present in the output.
+        It employs the use of a heap-queue to keep track of the top combinations.
+        Should be used in case where value of nCr is expected to be too large. 
+        The default is None.
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
-
+    DataFrame
+        A dataframe with weighted Reach and Frequency for the combinations of length="size".
+        
+    Examples
+    -------
+    >>> data
+         itemCoffee  itemPastry  itemJuice  ...  itemColdDrink  itemChips  itemNone
+    0             1           0          0  ...              0          0         0
+    1             0           1          0  ...              1          0         0
+    2             1           0          0  ...              0          0         0
+    3             1           0          0  ...              0          0         0
+    4             1           0          0  ...              0          0         0
+    ..          ...         ...        ...  ...            ...        ...       ...
+    117           1           0          0  ...              0          0         0
+    118           1           1          1  ...              1          0         0
+    119           1           0          0  ...              1          0         0
+    120           1           0          0  ...              0          0         0
+    121           1           0          0  ...              0          0         0
+    
+    [122 rows x 7 columns]
+    >>> turf(data, multi_cols, 3, top=10)
+        Reach  Frequency                              Combination
+     0    118        127      itemCoffee, itemColdDrink, itemNone
+     1    117        139    itemCoffee, itemPastry, itemColdDrink
+     2    115        123     itemCoffee, itemColdDrink, itemChips
+     3    114        130  itemCoffee, itemSandwich, itemColdDrink
+     4    114        126     itemCoffee, itemJuice, itemColdDrink
+     5     96        106         itemCoffee, itemPastry, itemNone
+     6     92        102        itemCoffee, itemPastry, itemChips
+     7     91        109     itemCoffee, itemPastry, itemSandwich
+     8     91        105        itemCoffee, itemPastry, itemJuice
+     9     91         93          itemCoffee, itemJuice, itemNone
+    >>> turf(data, multi_cols, 3, top=10, forced_alt=["itemCoffee"], 
+             mxclusive_alt=["itemColdDrink", "itemPastry"])
+        Reach  Frequency                              Combination
+     0    118        127      itemColdDrink, itemNone, itemCoffee
+     1    115        123     itemColdDrink, itemChips, itemCoffee
+     2    114        130  itemSandwich, itemColdDrink, itemCoffee
+     3    114        126     itemJuice, itemColdDrink, itemCoffee
+     4     96        106         itemPastry, itemNone, itemCoffee
+     5     92        102        itemPastry, itemChips, itemCoffee
+     6     91        109     itemPastry, itemSandwich, itemCoffee
+     7     91        105        itemPastry, itemJuice, itemCoffee
+     8     91         93          itemJuice, itemNone, itemCoffee
+     9     90         97       itemSandwich, itemNone, itemCoffee
+    ^every combination above contains "itemCoffee" and none of the contains "itemColdDrink" 
+    and "itemPastry" together.
     """
     #Validation checks
     if not isinstance(data, pd.core.frame.DataFrame):
