@@ -13,7 +13,7 @@ with open("requirements.txt", "r") as fh:
     requirements = [line.strip() for line in fh]
 
 setuptools.setup(
-    name="is-number",
+    name="survpy",
     version="0.0.1",
     author="Asad Mujawar",
     author_email="mujawar.asad.98@gmail.com",
